@@ -1,0 +1,4 @@
+CREATE TABLE partidas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    jogadas TEXT
+);
