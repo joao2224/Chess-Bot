@@ -1,66 +1,105 @@
 import pygame
-import set_board
-import moves
+from chessboard import Board
+import random
+from bot import best_move
+
 
 pygame.init()
 
-screen_width = 850
-screen_length = 616
+screen = pygame.display.set_mode((Board.COLS * Board.SQUARE_SIZE, Board.ROWS * Board.SQUARE_SIZE))
+pygame.display.set_caption("Chess Board")
+board = Board(screen)
 
-screen = pygame.display.set_mode((screen_width , screen_length))
-pygame.display.set_caption("Chess bot")
-timer = pygame.time.Clock()
-fps = 60
+def redesenhar_tabuleiro(screen, board, FEN):
+    board.create_board()
+    board.all_sprites.draw(screen)  # Desenha todas as peças
+    board.ball_sprites.draw(screen)  # Desenha todas as bolas
+    pygame.display.flip()
+    
+def pixel_to_board(pos):
+    pos_x, pos_y = pos
+    col = pos_x // Board.SQUARE_SIZE
+    row = pos_y // Board.SQUARE_SIZE
+    return row, col
 
-screen.fill((80, 31, 145))
-square_number = {}
-square_number = set_board.board(screen)
-rects_voce, rects_adversario, cor_voce = set_board.set_board(screen , square_number)
+fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+rodada = fen.split(' ')[1]
+board.draw_pieces(fen)
+board.FEN_reader(fen, rodada)
+historico_jogadas = []
 
-circulos = {}
-pre_circulos = {}
-jogadores = [rects_adversario, rects_voce]
-font = pygame.font.Font(None, 18)
-
-# Variável para rastrear o índice do jogador atual
-
-if cor_voce == 'b':
-    indice_jogador_atual = 1  # "você" começa
+cores = ["w" , "b"]
+jogadores = ["bot", "player"]
+cor1 = random.choice(cores)
+if cor1 == "w":
+    cor2 = cores[1]
 else:
-    indice_jogador_atual = 0  # "adversário" começa
+    cor2 = cores[0]
+adversarios = {"bot": cor1, "player": cor2}
 
-firt_game_move = True
+selected_piece = None
 running = True
 while running:
-    pygame.display.flip()
+   
+    rodada = fen.split(' ')[1]
+    if adversarios["bot"] == rodada:
+        move = best_move(board, adversarios["bot"], historico_jogadas)
+        piace = move[2]
+        (target_row, target_col) = move[0]
+        board.update_piece_position(piace, target_row, target_col)
+        jogada = piace.name + str(target_row) + str(target_col)
+        historico_jogadas.append(jogada)
+        if (target_row, target_col) in piace.captures:
+            board.captura(piace)
+        fen = board.FEN_updater(fen)
+        redesenhar_tabuleiro(screen, board, fen)
+        piace.moved += 1
+        board.FEN_reader(fen, rodada)
+    
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-
+        
         elif event.type == pygame.MOUSEBUTTONDOWN:
-            status = False
-            mouse_x, mouse_y = pygame.mouse.get_pos()
+            pos = pygame.mouse.get_pos()
+            clicked_sprites = [
+                    s for s in board.all_sprites
+                    if (s.rect.collidepoint(pos) and (s.name.isupper() if rodada == "w" else s.name.islower()))
+                ]
+            clicked_ball = False
+            
+            for sprite in board.ball_sprites:
+                if sprite.rect.collidepoint(pos):
+                    target_row, target_col = pixel_to_board(pos)
 
-            jogador_atual = jogadores[indice_jogador_atual]
+                    if selected_piece:
 
-            for nome_peca, (rect_peca, img) in jogador_atual.items():
-                if rect_peca.collidepoint(mouse_x, mouse_y):
-                    imagem = img
-                    nome = nome_peca
-                    if not len(pre_circulos) == 0:
-                        moves.remove_circulos(screen, circulos, rects_adversario, rects_voce, jogador_atual)
-                    circulos , nome_id = moves.moves_opition(screen, nome_peca, rect_peca, rects_adversario, rects_voce, jogador_atual)
-                    pre_circulos = circulos.copy()
-                    rect_peca_clicada = rect_peca  # Armazena o retângulo da peça clicada
+                        board.update_piece_position(selected_piece, target_row, target_col)
+                        jogada = selected_piece.name + str(target_col) + str(target_row)
+                        historico_jogadas.append(jogada)
+                        if (target_row, target_col) in selected_piece.captures:
+                            board.captura(selected_piece)
+                        fen = board.FEN_updater(fen)
+                        print(fen)
+                        board.ball_sprites.empty()
+                        redesenhar_tabuleiro(screen, board, fen)
+                        selected_piece.moved += 1
+                        board.FEN_reader(fen, rodada)
+                        selected_piece = None
+                    clicked_ball = True
                     break
 
-            for chave, rect_circulo in circulos.items():
-                if rect_circulo.collidepoint(mouse_x, mouse_y):
-                    running = moves.move(screen, rect_circulo, rect_peca_clicada, imagem, circulos, rects_adversario, rects_voce, jogador_atual, nome , nome_id, font)
-                    status = True  # Usa o retângulo da peça clicada
-                    break
-                    
-            if status: # Alternar para o próximo jogador
-                indice_jogador_atual = (indice_jogador_atual + 1) % len(jogadores)
+            if not clicked_ball:
+                board.ball_sprites.empty()  # Limpa todas as bolinhas
+                redesenhar_tabuleiro(screen, board, fen)
+            
+            if clicked_sprites:
+                selected_piece = clicked_sprites[0]
+                cords = selected_piece.moves + selected_piece.captures
+                board.show_moves(cords)
 
+            if board.check_end_of_game():
+                running = False
+
+    pygame.display.flip()
 pygame.quit()
