@@ -1,0 +1,20 @@
+aberturas_xadrez = {
+    "Abertura Ruy López (Espanhola)": ["P44", "p43", "N33", "n62", "B15"],
+    "Defesa Siciliana": ["P44", "p23"],
+    "Abertura Italiana": ["P44", "p43", "N33", "n62", "B24"],
+    "Defesa Francesa": ["P44", "p42"],
+    "Defesa Caro-Kann": ["P44", "p22"],
+    "Abertura de Peão da Dama": ["P34", "p33"],
+    "Defesa Índia do Rei": ["P34", "n52", "P43", "p35"],
+    "Defesa Nimzo-índia": ["P34", "n52", "P43", "n24"],
+    "Defesa Grünfeld": ["P34", "n52", "P43", "p33"],
+    "Abertura Inglesa": ["P24"],
+    "Abertura Reti": ["N23"],
+    "Defesa Pirc": ["P44", "p36"],
+    "Defesa Alekhine": ["P44", "n26"],
+    "Defesa Escandinava (Centro-Counter)": ["P44", "p35"],
+    "Abertura do Bispo": ["P44", "p43", "B42"],
+    "Abertura Vienense": ["P44", "p43", "N23"],
+    "Abertura Catalã": ["P34", "n52", "P43", "p36", "P43"],
+    "Gambito do Rei": ["P44", "p45", "P34"]
+}
